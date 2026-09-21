@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pitaya Kontrol Paneli</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        #connectBtn {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+        #connectBtn:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        #connectBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #status {
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            background: #fff3cd;
+            color: #856404;
+        }
+        #status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+        #status.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .btn {
+            padding: 18px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .btn-red { background: #e74c3c; }
+        .btn-red:hover:not(:disabled) { background: #c0392b; transform: translateY(-2px); }
+        .btn-blue { background: #3498db; }
+        .btn-blue:hover:not(:disabled) { background: #2980b9; transform: translateY(-2px); }
+        .btn-green { background: #2ecc71; }
+        .btn-green:hover:not(:disabled) { background: #27ae60; transform: translateY(-2px); }
+        .info {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍈 Pitaya</h1>
+        <p class="subtitle">Bluetooth Kontrol Paneli</p>
+        
+        <button id="connectBtn">🔗 Pitaya'ya Bağlan</button>
+        <div id="status">Durum: Bağlı değil</div>
+        
+        <div class="buttons">
+            <button class="btn btn-red" id="btnRed" disabled>🔴 Kırmızı — Ekran Değiştir</button>
+            <button class="btn btn-blue" id="btnBlue" disabled>🔵 Mavi — Seç / Durdur</button>
+            <button class="btn btn-green" id="btnGreen" disabled>🟢 Yeşil — Arttır / Sıfırla</button>
+        </div>
+        
+        <p class="info">Chrome veya Edge tarayıcı gerekir</p>
+    </div>
+
+    <script>
+        const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
+        const CHARACTERISTIC_UUID = '87654321-4321-6789-4321-fedcba987654';
+        
+        let bluetoothDevice = null;
+        let commandCharacteristic = null;
+        
+        const connectBtn = document.getElementById('connectBtn');
+        const statusEl = document.getElementById('status');
+        const btnRed = document.getElementById('btnRed');
+        const btnBlue = document.getElementById('btnBlue');
+        const btnGreen = document.getElementById('btnGreen');
+        
+        function setStatus(text, type = '') {
+            statusEl.textContent = 'Durum: ' + text;
+            statusEl.className = type;
+        }
+        
+        function enableButtons(enabled) {
+            btnRed.disabled = !enabled;
+            btnBlue.disabled = !enabled;
+            btnGreen.disabled = !enabled;
+        }
+        
+        connectBtn.addEventListener('click', async () => {
+            if (!navigator.bluetooth) {
+                setStatus('Bu tarayıcı Bluetooth desteklemiyor!', 'error');
+                return;
+            }
+            
+            try {
+                setStatus('Cihaz aranıyor...');
+                
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'Pitaya' }],
+                    optionalServices: [SERVICE_UUID]
+                });
+                
+                setStatus('Bağlanıyor...');
+                
+                const server = await bluetoothDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                commandCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+                
+                setStatus('Bağlandı! ✓', 'connected');
+                connectBtn.disabled = true;
+                connectBtn.textContent = '✓ Bağlı';
+                enableButtons(true);
+                
+                bluetoothDevice.addEventListener('gattserverdisconnected', () => {
+                    setStatus('Bağlantı kesildi', 'error');
+                    connectBtn.disabled = false;
+                    connectBtn.textContent = '🔗 Pitaya\'ya Bağlan';
+                    enableButtons(false);
+                    commandCharacteristic = null;
+                });
+                
+            } catch (error) {
+                console.error(error);
+                if (error.name === 'NotFoundError') {
+                    setStatus('Cihaz bulunamadı', 'error');
+                } else {
+                    setStatus('Hata: ' + error.message, 'error');
+                }
+                enableButtons(false);
+            }
+        });
+        
+        async function sendCommand(cmd) {
+            if (!commandCharacteristic) return;
+            try {
+                const encoder = new TextEncoder();
+                await commandCharacteristic.writeValue(encoder.encode(cmd));
+                console.log('Gönderildi:', cmd);
+            } catch (error) {
+                console.error('Komut gönderme hatası:', error);
+            }
+        }
+        
+        btnRed.addEventListener('click', () => sendCommand('RED'));
+        btnBlue.addEventListener('click', () => sendCommand('BLUE'));
+        btnGreen.addEventListener('click', () => sendCommand('GREEN'));
+    </script>
+</body>
+</html>
