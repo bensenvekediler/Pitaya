@@ -10,29 +10,26 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
         }
-        .container {
+        .container { max-width: 600px; margin: 0 auto; }
+        .card {
             background: white;
             border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         }
         h1 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             font-size: 28px;
         }
         .subtitle {
             text-align: center;
             color: #888;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             font-size: 14px;
         }
         #connectBtn {
@@ -46,7 +43,7 @@
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         #connectBtn:hover:not(:disabled) {
             background: #5568d3;
@@ -58,153 +55,261 @@
         }
         #status {
             text-align: center;
-            padding: 12px;
+            padding: 10px;
             border-radius: 10px;
             font-weight: bold;
-            margin-bottom: 20px;
             background: #fff3cd;
             color: #856404;
+            font-size: 14px;
         }
-        #status.connected {
-            background: #d4edda;
-            color: #155724;
+        #status.connected { background: #d4edda; color: #155724; }
+        #status.error { background: #f8d7da; color: #721c24; }
+        .mood-header { text-align: center; margin-bottom: 20px; }
+        .mood-emoji {
+            font-size: 48px;
+            margin-bottom: 10px;
+            font-family: monospace;
         }
-        #status.error {
-            background: #f8d7da;
-            color: #721c24;
+        .mood-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+            letter-spacing: 2px;
         }
-        .buttons {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-        .btn {
-            padding: 18px;
+        .section-title {
             font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .event-list, .countdown-list { display: grid; gap: 8px; }
+        .event, .countdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .event-label, .countdown-label { color: #666; }
+        .event-value, .countdown-value {
+            font-weight: bold;
+            color: #333;
+            font-family: monospace;
+        }
+        .buttons { display: grid; gap: 10px; margin-top: 20px; }
+        .btn {
+            padding: 15px;
+            font-size: 15px;
             font-weight: bold;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transition: all 0.3s;
             color: white;
+            transition: all 0.3s;
         }
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
         .btn-red { background: #e74c3c; }
-        .btn-red:hover:not(:disabled) { background: #c0392b; transform: translateY(-2px); }
+        .btn-red:hover:not(:disabled) { background: #c0392b; }
         .btn-blue { background: #3498db; }
-        .btn-blue:hover:not(:disabled) { background: #2980b9; transform: translateY(-2px); }
+        .btn-blue:hover:not(:disabled) { background: #2980b9; }
         .btn-green { background: #2ecc71; }
-        .btn-green:hover:not(:disabled) { background: #27ae60; transform: translateY(-2px); }
+        .btn-green:hover:not(:disabled) { background: #27ae60; }
         .info {
             text-align: center;
             color: #999;
             font-size: 12px;
-            margin-top: 20px;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🍈 Pitaya</h1>
-        <p class="subtitle">Bluetooth Kontrol Paneli</p>
-        
-        <button id="connectBtn">🔗 Pitaya'ya Bağlan</button>
-        <div id="status">Durum: Bağlı değil</div>
-        
-        <div class="buttons">
-            <button class="btn btn-red" id="btnRed" disabled>🔴 Kırmızı — Ekran Değiştir</button>
-            <button class="btn btn-blue" id="btnBlue" disabled>🔵 Mavi — Seç / Durdur</button>
-            <button class="btn btn-green" id="btnGreen" disabled>🟢 Yeşil — Arttır / Sıfırla</button>
+        <div class="card">
+            <h1>🍈 Pitaya</h1>
+            <p class="subtitle">Bluetooth Kontrol Paneli</p>
+            <button id="connectBtn">🔗 Pitaya'ya Bağlan</button>
+            <div id="status">Durum: Bağlı değil</div>
         </div>
-        
-        <p class="info">Chrome veya Edge tarayıcı gerekir</p>
+
+        <div class="card">
+            <div class="mood-header">
+                <div class="mood-emoji" id="moodEmoji">(^_^)</div>
+                <div class="mood-text" id="moodText">SAKIN</div>
+            </div>
+
+            <div class="section-title">📊 Son Duygular</div>
+            <div class="event-list">
+                <div class="event">
+                    <span class="event-label">💕 Sevilme</span>
+                    <span class="event-value" id="lastLove">—</span>
+                </div>
+                <div class="event">
+                    <span class="event-label">😵 Sallanma</span>
+                    <span class="event-value" id="lastShake">—</span>
+                </div>
+                <div class="event">
+                    <span class="event-label">😊 Mutlu olma</span>
+                    <span class="event-value" id="lastHappy">—</span>
+                </div>
+            </div>
+
+            <div class="section-title">⏰ Sıradaki Duygu Değişimi</div>
+            <div class="countdown-list">
+                <div class="countdown-item">
+                    <span class="countdown-label">😐 Sıkılmaya</span>
+                    <span class="countdown-value" id="boredIn">—</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-label">😢 Üzülmeye</span>
+                    <span class="countdown-value" id="sad1In">—</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-label">😭 Ağlamaya</span>
+                    <span class="countdown-value" id="sad2In">—</span>
+                </div>
+                <div class="countdown-item">
+                    <span class="countdown-label">😠 Sinirlenmeye</span>
+                    <span class="countdown-value" id="angryIn">—</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="section-title">🎮 Kontrol</div>
+            <div class="buttons">
+                <button class="btn btn-red" id="btnRed" disabled>🔴 Kırmızı — Ekran Değiştir</button>
+                <button class="btn btn-blue" id="btnBlue" disabled>🔵 Mavi — Seç / Durdur</button>
+                <button class="btn btn-green" id="btnGreen" disabled>🟢 Yeşil — Arttır / Sıfırla</button>
+            </div>
+            <p class="info">Chrome veya Edge tarayıcı gerekir</p>
+        </div>
     </div>
 
     <script>
         const SERVICE_UUID = '12345678-1234-5678-1234-56789abcdef0';
-        const CHARACTERISTIC_UUID = '87654321-4321-6789-4321-fedcba987654';
-        
+        const CHAR_WRITE_UUID = '87654321-4321-6789-4321-fedcba987654';
+        const CHAR_NOTIFY_UUID = '11111111-2222-3333-4444-555555555555';
+
         let bluetoothDevice = null;
-        let commandCharacteristic = null;
-        
+        let writeChar = null;
+        let notifyChar = null;
+
         const connectBtn = document.getElementById('connectBtn');
         const statusEl = document.getElementById('status');
-        const btnRed = document.getElementById('btnRed');
-        const btnBlue = document.getElementById('btnBlue');
-        const btnGreen = document.getElementById('btnGreen');
-        
-        function setStatus(text, type = '') {
+
+        function setStatus(text, type) {
             statusEl.textContent = 'Durum: ' + text;
-            statusEl.className = type;
+            statusEl.className = type || '';
         }
-        
+
         function enableButtons(enabled) {
-            btnRed.disabled = !enabled;
-            btnBlue.disabled = !enabled;
-            btnGreen.disabled = !enabled;
+            document.getElementById('btnRed').disabled = !enabled;
+            document.getElementById('btnBlue').disabled = !enabled;
+            document.getElementById('btnGreen').disabled = !enabled;
         }
-        
+
+        function formatAgo(seconds) {
+            if (seconds === undefined || seconds === null) return '—';
+            if (seconds < 60) return seconds + ' sn önce';
+            if (seconds < 3600) return Math.floor(seconds / 60) + ' dk önce';
+            if (seconds < 86400) return Math.floor(seconds / 3600) + ' sa önce';
+            return Math.floor(seconds / 86400) + ' gün önce';
+        }
+
+        function formatCountdown(seconds) {
+            if (seconds === undefined || seconds === null) return '—';
+            if (seconds <= 0) return 'şimdi!';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            if (h > 0) return h + ' sa ' + m + ' dk';
+            if (m > 0) return m + ' dk ' + s + ' sn';
+            return s + ' sn';
+        }
+
+        function updateMood(data) {
+            document.getElementById('moodEmoji').textContent = data.emoji;
+            document.getElementById('moodText').textContent = data.mood;
+            document.getElementById('lastLove').textContent = formatAgo(data.loveAgo);
+            document.getElementById('lastShake').textContent = formatAgo(data.shakeAgo);
+            document.getElementById('lastHappy').textContent = formatAgo(data.happyAgo);
+            document.getElementById('boredIn').textContent = formatCountdown(data.boredIn);
+            document.getElementById('sad1In').textContent = formatCountdown(data.sad1In);
+            document.getElementById('sad2In').textContent = formatCountdown(data.sad2In);
+            document.getElementById('angryIn').textContent = formatCountdown(data.angryIn);
+        }
+
         connectBtn.addEventListener('click', async () => {
             if (!navigator.bluetooth) {
                 setStatus('Bu tarayıcı Bluetooth desteklemiyor!', 'error');
                 return;
             }
-            
+
             try {
                 setStatus('Cihaz aranıyor...');
-                
                 bluetoothDevice = await navigator.bluetooth.requestDevice({
                     filters: [{ name: 'Pitaya' }],
                     optionalServices: [SERVICE_UUID]
                 });
-                
+
                 setStatus('Bağlanıyor...');
-                
                 const server = await bluetoothDevice.gatt.connect();
                 const service = await server.getPrimaryService(SERVICE_UUID);
-                commandCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
-                
+
+                writeChar = await service.getCharacteristic(CHAR_WRITE_UUID);
+                notifyChar = await service.getCharacteristic(CHAR_NOTIFY_UUID);
+
+                await notifyChar.startNotifications();
+                notifyChar.addEventListener('characteristicvaluechanged', (event) => {
+                    try {
+                        const decoder = new TextDecoder('utf-8');
+                        const jsonStr = decoder.decode(event.target.value);
+                        const data = JSON.parse(jsonStr);
+                        updateMood(data);
+                    } catch (e) {
+                        console.error('Parse hatası:', e);
+                    }
+                });
+
                 setStatus('Bağlandı! ✓', 'connected');
                 connectBtn.disabled = true;
                 connectBtn.textContent = '✓ Bağlı';
                 enableButtons(true);
-                
+
                 bluetoothDevice.addEventListener('gattserverdisconnected', () => {
                     setStatus('Bağlantı kesildi', 'error');
                     connectBtn.disabled = false;
                     connectBtn.textContent = '🔗 Pitaya\'ya Bağlan';
                     enableButtons(false);
-                    commandCharacteristic = null;
+                    writeChar = null;
+                    notifyChar = null;
                 });
-                
+
             } catch (error) {
                 console.error(error);
-                if (error.name === 'NotFoundError') {
-                    setStatus('Cihaz bulunamadı', 'error');
-                } else {
-                    setStatus('Hata: ' + error.message, 'error');
-                }
+                setStatus('Hata: ' + error.message, 'error');
                 enableButtons(false);
             }
         });
-        
+
         async function sendCommand(cmd) {
-            if (!commandCharacteristic) return;
+            if (!writeChar) return;
             try {
                 const encoder = new TextEncoder();
-                await commandCharacteristic.writeValue(encoder.encode(cmd));
+                await writeChar.writeValue(encoder.encode(cmd));
                 console.log('Gönderildi:', cmd);
             } catch (error) {
-                console.error('Komut gönderme hatası:', error);
+                console.error('Komut hatası:', error);
             }
         }
-        
-        btnRed.addEventListener('click', () => sendCommand('RED'));
-        btnBlue.addEventListener('click', () => sendCommand('BLUE'));
-        btnGreen.addEventListener('click', () => sendCommand('GREEN'));
+
+        document.getElementById('btnRed').addEventListener('click', () => sendCommand('RED'));
+        document.getElementById('btnBlue').addEventListener('click', () => sendCommand('BLUE'));
+        document.getElementById('btnGreen').addEventListener('click', () => sendCommand('GREEN'));
     </script>
 </body>
 </html>
